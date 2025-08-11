@@ -1,0 +1,406 @@
+
+{% extends 'teacher/teacher_base.html' %}
+{% load static %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+{% if messages %}
+{% load static %}
+
+  <!-- Toast container -->
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1100">
+    {% for message in messages %}
+      <div class="toast align-items-center text-bg-success border-0 mb-2" role="alert">
+        <div class="d-flex">
+          <div class="toast-body">
+            {{ message }}
+          </div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                  data-bs-dismiss="toast"></button>
+        </div>
+      </div>
+    {% endfor %}
+    </div>
+
+    <script>
+    // show all toasts found in the container
+    document.querySelectorAll('.toast').forEach(t => new bootstrap.Toast(t).show());
+    </script>
+    {% endif %}
+
+
+
+  <!-- Main Content -->
+    <div class="col-md-10 p-4">
+    <div class="profile-section d-flex justify-content-between align-items-center mb-4">
+
+    <div class="btn-wrapper d-flex gap-2">
+      <a href="{% url 'teacher:mark_attendance_page' %}" class="quick-action-btn btn-mark">
+        <i class="fas fa-calendar-plus"></i> <span class="quick-label">Mark Attendance</span>
+      </a>
+      <a href="#" class="quick-action-btn btn-enroll {% if not can_enroll %}disabled text-muted{% endif %}"
+        {% if can_enroll %} data-bs-toggle="modal" data-bs-target="#enrollModal" {% endif %}>
+        <i class="fas fa-user-plus"></i> <span class="quick-label">Enroll Student</span>
+      </a>
+    </div>
+
+    <div class="profile-info d-flex align-items-center gap-3">
+    <img src="{{ teacher.profile_picture.url }}" alt="User" class="profile-pic" />
+      <div>
+        <h6 class="mb-0">{{ request.user.teacher_profile.teacher_fullname }}</h6>
+
+        <small>{{ request.user.teacher_profile.school.name }}</small>
+      </div>
+
+      <div class="badge-group d-flex ms-2">
+        {% for classgroup in request.user.teacher_profile.assigned_classes.all %}
+          <span class="badge">{{ classgroup.name }}</span>
+        {% empty %}
+          <span class="text-muted">No class assigned</span>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+
+
+
+
+
+
+  <div class="row g-3">
+    <div class="col-md-4">
+      <div class="summary-card purple-card d-flex justify-content-between align-items-center">
+        <div class="card-text">
+          <p class="card-title">Total Classes</p>
+          <h2>{{ class_count }}</h2>
+        </div>
+        <i class="fas fa-chalkboard card-icon"></i>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="summary-card green-card d-flex justify-content-between align-items-center">
+        <div class="card-text">
+          <p class="card-title">Total Students</p>
+          <h2>{{ total_students }}</h2>
+        </div>
+        <i class="fas fa-user-graduate card-icon"></i>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="summary-card blue-card d-flex justify-content-between align-items-center">
+        <div class="card-text">
+          <p class="card-title">Present Today</p>
+          <h2>{{ present_today_count }}</h2>
+        </div>
+        <i class="fas fa-user-check card-icon"></i>
+      </div>
+    </div>
+  </div>
+
+
+
+  <div class="row mt-4">
+
+        <div class="col-md-7 d-flex">
+          <div class="card flex-fill">
+            <div class="card-header">
+              <h5 class="mb-0">Peak Attendance Hours</h5>
+            </div>
+            <div class="card-body">
+              <canvas id="attendanceHourChart" style="height: 200px;"></canvas>
+            </div>
+          </div>
+      </div>
+
+      <div class="col-md-5 d-flex">
+        <div class="card flex-fill">
+          <div class="card-header">
+            <h5 class="mb-0">Attendance Trends</h5>
+          </div>
+          <div class="card-body d-flex flex-column justify-content-center">
+            <canvas id="attendancePieChart" style="height: 200px;"></canvas>
+            <div class="mt-3 text-center">
+              <span class="badge bg-success me-2">Present: {{ present_today_count }}</span>
+              <span class="badge bg-danger">Absent: {{ absent_today_count }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+  </div>
+
+
+
+
+  <div class="row mt-4">
+
+    <div class="col-md-7 order-md-1 order-2 stud">
+      <div class="students-section p-3 rounded">
+        <h6 class="quick-action mb-3">Students</h6>
+        <table class="table student-table mb-0">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>ID</th>
+              <th>Class</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in students %}
+            <tr>
+              <td><strong>{{ s.firstname }} {{ s.lastname }}</strong></td>
+              <td>{{ s.admission_id }}</td>
+              <td>
+                {% if s.classgroup %}
+                  {{ s.classgroup.name }}
+                {% else %}
+                  <span class="text-muted">-</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <a href="{% url 'teacher:manage_students' %}" class="btn view-all-btn mt-3">View All</a>
+      </div>
+    </div>
+
+  <div class="col-md-5 order-md-2 order-1">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="quick-action">Recent Attendance</h6>
+      </div>
+
+      {% for d in daily_stats %}
+      <div class="attendance-record">
+        <div class="record-left">
+          <a href="{% url 'teacher:attendance_pdf' day=d.date|date:'Y-m-d' %}" target="_blank" class="pdf-link" title="View PDF for {{ d.date }}">
+            <i class="fas fa-file-pdf"></i> {{ d.date }}
+          </a>
+        </div>
+        <div class="status">
+          <span class="tooltip-icon" data-tooltip="Present Students">
+            <i class="fas fa-user-check text-success"></i> {{ d.present }}
+          </span>
+          <span class="tooltip-icon ms-3" data-tooltip="Absent Students">
+            <i class="fas fa-user-times text-danger"></i> {{ d.absent }}
+          </span>
+        </div>
+      </div>
+      {% empty %}
+      <div class="alert alert-info py-2">No attendance yet.</div>
+      {% endfor %}
+  </div>
+
+  </div>
+
+
+
+
+<!-------------------------------------------------------- Enroll Modal ----------------------------------------------------------->
+<!-- Enroll Student Modal -->
+<div class="modal fade" id="enrollModal" tabindex="-1" aria-labelledby="enrollModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content p-4">
+
+      <div class="modal-header">
+        <div>
+          <h5 class="modal-title fw-bold" id="enrollModalLabel">Enroll New Student</h5>
+        </div>
+        <span class="badge bg-secondary ms-3">{{ request.user.teacher_profile.classgroup.name }}</span>
+        <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal"></button>
+      </div>
+
+      <!-- POST form -->
+      <form id="enrollForm" method="post" action="">
+        {% csrf_token %}
+        <input type="hidden" name="fingerprint_data" id="fingerprint_data">
+
+        <div class="modal-body">
+          <!-- Student Info -->
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Student&nbsp;ID</label>
+              <input name="admission_id" type="text" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">First&nbsp;Name</label>
+              <input name="firstname" type="text" class="form-control" required>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Last&nbsp;Name</label>
+              <input name="lastname" type="text" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Date&nbsp;of&nbsp;Birth</label>
+              <input name="date_of_birth" type="date" class="form-control">
+            </div>
+          </div>
+
+          <!-- ClassGroup (Rendered from form) -->
+          <div class="mb-3">
+            <label class="form-label">Class Group</label>
+            {{ form.classgroup }}
+          </div>
+
+          <hr class="my-4">
+          <h6>Guardian Information</h6>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Guardian&nbsp;Name</label>
+              <input name="guardian_name" type="text" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Guardian&nbsp;Email</label>
+              <input name="guardian_email" type="email" class="form-control">
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label">Guardian&nbsp;Phone</label>
+            <input name="guardian_phone" type="tel" class="form-control">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-enroll px-4" onclick="startFingerprintEnrollment()">
+            Enroll (Scan Finger)
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<!-- Fingerprint Status Modal -->
+<div class="modal fade" id="fingerModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content p-3">
+      <h5 class="modal-title">Fingerprint Enrollment</h5>
+      <p id="modalMessage" class="mb-0"></p>
+    </div>
+  </div>
+</div>
+
+<script>
+const FASTAPI_BASE = "http://127.0.0.1:8001";  // Adjust to match deployed local app port
+
+function showFingerModal(msg) {
+  document.getElementById("modalMessage").innerText = msg;
+  bootstrap.Modal.getOrCreateInstance(document.getElementById("fingerModal")).show();
+}
+
+async function startFingerprintEnrollment() {
+  showFingerModal("Place your finger on the scanner…");
+
+  try {
+    const first = await fetch(`${FASTAPI_BASE}/scan`, {
+      method: "POST"
+    }).then(r => r.json());
+
+    showFingerModal("Scan the SAME finger again…");
+
+    const compare = await fetch(`${FASTAPI_BASE}/compare`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ stored_fmd: first.fmd })
+    }).then(r => r.json());
+
+    if (compare.match) {
+      document.getElementById("fingerprint_data").value = first.fmd;
+      showFingerModal("✅ Fingerprint captured. Saving…");
+      document.getElementById("enrollForm").submit();
+    } else {
+      showFingerModal("❌ Fingerprint mismatch. Please try again.");
+    }
+
+  } catch (error) {
+    console.error(error);
+    showFingerModal("⚠️ Scanner error. Is the Fingerprint App running?");
+  }
+}
+</script>
+
+
+<!-------------------------------------------------------- Enroll Modal ----------------------------------------------------------->
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+
+
+<!-- pie and bar chart -->
+{{ hours|json_script:"hour-data" }}
+{{ attendance_by_hour|json_script:"attendance-count-data" }}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  const hourLabels = JSON.parse(document.getElementById("hour-data").textContent);
+  const attendanceCounts = JSON.parse(document.getElementById("attendance-count-data").textContent);
+
+  const hourCtx = document.getElementById('attendanceHourChart').getContext('2d');
+  new Chart(hourCtx, {
+    type: 'bar',
+    data: {
+      labels: hourLabels.map(h => `${h}:00`),
+      datasets: [{
+        label: 'Present Students',
+        data: attendanceCounts,
+        backgroundColor: '#4f46e5',
+        borderRadius: 10,
+        barThickness: 26
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { stepSize: 1 },
+          grid: {
+            drawBorder: false,
+            color: 'rgba(0, 0, 0, 0.05)'
+          }
+        },
+        x: {
+          grid: { display: false }
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: context => `${context.parsed.y} student(s)`
+          }
+        }
+      }
+    }
+  });
+
+  const pieCtx = document.getElementById('attendancePieChart').getContext('2d');
+  new Chart(pieCtx, {
+    type: 'pie',
+    data: {
+      labels: ['Present', 'Absent'],
+      datasets: [{
+        data: [{{ present_today_count }}, {{ absent_today_count }}],
+        backgroundColor: ['#10b981', '#ef4444']
+      }]
+    },
+    options: {
+      responsive: true
+    }
+  });
+</script>
+
+
+{% endblock %}
+

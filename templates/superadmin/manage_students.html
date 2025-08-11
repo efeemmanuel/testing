@@ -1,0 +1,468 @@
+{% extends "superadmin/superadmin_base.html" %}
+{% load static %}
+{% block title %}Super Admin Dashboard{% endblock %}
+
+{% block content %}
+
+
+<!-- Custom Styles -->
+<style>
+  .card {
+    background-color: #ffffff;
+    border-radius: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+
+  .table {
+    font-size: 0.95rem;
+    border-collapse: separate;
+    border-spacing: 0 0.5rem;
+  }
+
+  .table thead th {
+    border: none;
+    font-weight: 600;
+    color: #495057;
+    background-color: #f8f9fa;
+  }
+
+  .table tbody td {
+    background-color: #ffffff;
+    border: none;
+    padding: 0.8rem;
+    vertical-align: middle;
+  }
+
+  .table-hover tbody tr:hover td {
+    background-color: #f0f4ff;
+    transition: background-color 0.2s ease-in-out;
+  }
+
+  .modal-content {
+    border-radius: 1rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  }
+
+  .btn-outline-primary i {
+    font-size: 1rem;
+  }
+</style>
+
+
+<!-- Main Content -->
+<div class="col-md-10 p-4">
+
+  <h3 class="mb-4 fw-semibold">Manage Students</h3>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- Students Table -->
+  <div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-body">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Full Name</th>
+            <th>School</th>
+            <th>Class Group</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for student in students %}
+            <tr>
+              <td>{{ student.firstname }} {{ student.lastname }}</td>
+              <td>{{ student.school.name }}</td>
+              <td>{{ student.classgroup.name }}</td>
+              <td>
+                <button class="btn btn-sm btn-outline-primary edit-btn"
+                        data-bs-toggle="modal"
+                        data-bs-target="#editModal"
+                        data-id="{{ student.id }}"
+                        data-name="{{ student.firstname }}"
+                        data-lastname="{{ student.lastname }}"
+                        data-dob="{{ student.date_of_birth }}"
+                        data-admission-id="{{ student.admission_id }}"
+                        data-guardian-name="{{ student.guardian_name }}"
+                        data-guardian-email="{{ student.guardian_email }}"
+                        data-guardian-phone="{{ student.guardian_phone }}"
+                        data-school="{{ student.school.id }}"
+                        data-classgroup="{{ student.classgroup.id }}">
+                  Edit
+                </button>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Student Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content border-0 shadow-sm rounded-4">
+      <form method="post" id="editForm">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Student</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="student_id" id="editId">
+
+          <div class="mb-3">
+            <label class="form-label">Admission ID</label>
+            <input type="text" name="admission_id" id="editAdmissionId" class="form-control" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">First Name</label>
+            <input type="text" name="firstname" id="editFirstname" class="form-control" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Last Name</label>
+            <input type="text" name="lastname" id="editLastname" class="form-control" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Date of Birth</label>
+            <input type="date" name="date_of_birth" id="editDob" class="form-control">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Guardian Name</label>
+            <input type="text" name="guardian_name" id="editGuardianName" class="form-control">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Guardian Email</label>
+            <input type="email" name="guardian_email" id="editGuardianEmail" class="form-control">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Guardian Phone</label>
+            <input type="text" name="guardian_phone" id="editGuardianPhone" class="form-control">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">School</label>
+            <select name="school" id="editSchool" class="form-select" required>
+              {% for school in schools %}
+                <option value="{{ school.id }}">{{ school.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Class Group</label>
+            <select name="classgroup" id="editClassgroup" class="form-select" required>
+              {% for group in form.fields.classgroup.queryset %}
+                <option value="{{ group.id }}">{{ group.name }} ({{ group.school.name }})</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Save Changes</button>
+          <a href="#" id="deleteBtn" class="btn btn-danger">Delete</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap Bundle & Icons -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+<!-- Modal Script -->
+<script>
+  const modal = document.getElementById("editModal");
+  const form = document.getElementById("editForm");
+  const deleteBtn = document.getElementById("deleteBtn");
+
+  modal.addEventListener("show.bs.modal", event => {
+    const button = event.relatedTarget;
+
+    const id = button.getAttribute("data-id");
+    const name = button.getAttribute("data-name");
+    const school = button.getAttribute("data-school");
+    const classgroup = button.getAttribute("data-classgroup");
+
+    const admissionId = button.getAttribute("data-admission-id");
+    const lastname = button.getAttribute("data-lastname");
+    const dob = button.getAttribute("data-dob");
+    const gName = button.getAttribute("data-guardian-name");
+    const gEmail = button.getAttribute("data-guardian-email");
+    const gPhone = button.getAttribute("data-guardian-phone");
+
+    document.getElementById("editId").value = id;
+    document.getElementById("editFirstname").value = name;
+    document.getElementById("editLastname").value = lastname;
+    document.getElementById("editDob").value = dob;
+    document.getElementById("editAdmissionId").value = admissionId;
+    document.getElementById("editGuardianName").value = gName;
+    document.getElementById("editGuardianEmail").value = gEmail;
+    document.getElementById("editGuardianPhone").value = gPhone;
+    document.getElementById("editSchool").value = school;
+    document.getElementById("editClassgroup").value = classgroup;
+
+    form.action = `/superadmin/students/edit/${id}/`;
+    deleteBtn.href = `/superadmin/students/delete/${id}/`;
+  });
+</script>
+
+
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Main Content -->
+<div class="col-md-10 p-4">
+
+  <h3 class="mb-4">Manage Students</h3>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- Add Student Form -->
+  <!-- <form method="post" action="" class="row g-3 mb-5">
+  {% csrf_token %}
+  <div class="col-md-3">
+    {{ form.admission_id.label_tag }} {{ form.admission_id }}
+  </div>
+  <div class="col-md-3">
+    {{ form.firstname.label_tag }} {{ form.firstname }}
+  </div>
+  <div class="col-md-3">
+    {{ form.lastname.label_tag }} {{ form.lastname }}
+  </div>
+  <div class="col-md-3">
+    {{ form.date_of_birth.label_tag }} {{ form.date_of_birth }}
+  </div>
+  <div class="col-md-3">
+    {{ form.guardian_name.label_tag }} {{ form.guardian_name }}
+  </div>
+  <div class="col-md-3">
+    {{ form.guardian_email.label_tag }} {{ form.guardian_email }}
+  </div>
+  <div class="col-md-3">
+    {{ form.guardian_phone.label_tag }} {{ form.guardian_phone }}
+  </div>
+  <div class="col-md-3">
+    {{ form.school.label_tag }} {{ form.school }}
+  </div>
+  <div class="col-md-3">
+    {{ form.classgroup.label_tag }} {{ form.classgroup }}
+  </div>
+  <div class="col-md-3 mt-4">
+    <button type="submit" class="btn btn-success w-100">Add Student</button>
+  </div>
+</form> -->
+
+
+  <!-- Students Table -->
+  <table class="table table-bordered">
+    <thead class="table-light">
+      <tr>
+        <th>Full Name</th>
+        <th>School</th>
+        <th>Class Group</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for student in students %}
+        <tr>
+          <td>{{ student.firstname }}</td>
+          <td>{{ student.school.name }}</td>
+          <td>{{ student.classgroup.name }}</td>
+          <td>
+            <button class="btn btn-sm btn-outline-primary edit-btn"
+        data-bs-toggle="modal"
+        data-bs-target="#editModal"
+        data-id="{{ student.id }}"
+        data-name="{{ student.firstname }}"
+        data-lastname="{{ student.lastname }}"
+        data-dob="{{ student.date_of_birth }}"
+        data-admission-id="{{ student.admission_id }}"
+        data-guardian-name="{{ student.guardian_name }}"
+        data-guardian-email="{{ student.guardian_email }}"
+        data-guardian-phone="{{ student.guardian_phone }}"
+        data-school="{{ student.school.id }}"
+        data-classgroup="{{ student.classgroup.id }}">
+  Edit
+</button>
+
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Edit Student Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" id="editForm">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Student</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="student_id" id="editId">
+
+          <div class="mb-2">
+            <label>Admission ID</label>
+            <input type="text" name="admission_id" id="editAdmissionId" class="form-control" required>
+          </div>
+
+          <div class="mb-2">
+            <label>First Name</label>
+            <input type="text" name="firstname" id="editFirstname" class="form-control" required>
+          </div>
+
+          <div class="mb-2">
+            <label>Last Name</label>
+            <input type="text" name="lastname" id="editLastname" class="form-control" required>
+          </div>
+
+          <div class="mb-2">
+            <label>Date of Birth</label>
+            <input type="date" name="date_of_birth" id="editDob" class="form-control">
+          </div>
+
+          <div class="mb-2">
+            <label>Guardian Name</label>
+            <input type="text" name="guardian_name" id="editGuardianName" class="form-control">
+          </div>
+
+          <div class="mb-2">
+            <label>Guardian Email</label>
+            <input type="email" name="guardian_email" id="editGuardianEmail" class="form-control">
+          </div>
+
+          <div class="mb-2">
+            <label>Guardian Phone</label>
+            <input type="text" name="guardian_phone" id="editGuardianPhone" class="form-control">
+          </div>
+
+          <div class="mb-2">
+            <label>School</label>
+            <select name="school" id="editSchool" class="form-select" required>
+              {% for school in schools %}
+                <option value="{{ school.id }}">{{ school.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-2">
+            <label>Class Group</label>
+            <select name="classgroup" id="editClassgroup" class="form-select" required>
+              {% for group in form.fields.classgroup.queryset %}
+                <option value="{{ group.id }}">{{ group.name }} ({{ group.school.name }})</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Save Changes</button>
+          <a href="#" id="deleteBtn" class="btn btn-danger">Delete</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- <script>
+  const modal = document.getElementById("editModal");
+  const form = document.getElementById("editForm");
+  const deleteBtn = document.getElementById("deleteBtn");
+
+  modal.addEventListener("show.bs.modal", event => {
+    const button = event.relatedTarget;
+    
+    // Get attributes
+    const id = button.getAttribute("data-id");
+    const name = button.getAttribute("data-name");
+    const school = button.getAttribute("data-school");
+    const classgroup = button.getAttribute("data-classgroup");
+
+    // Optional additional attributes
+    const admissionId = button.getAttribute("data-admission-id");
+    const lastname = button.getAttribute("data-lastname");
+    const dob = button.getAttribute("data-dob");
+    const gName = button.getAttribute("data-guardian-name");
+    const gEmail = button.getAttribute("data-guardian-email");
+    const gPhone = button.getAttribute("data-guardian-phone");
+
+    // Set values in modal form
+    document.getElementById("editId").value = id;
+    document.getElementById("editFirstname").value = name;
+    document.getElementById("editLastname").value = lastname;
+    document.getElementById("editDob").value = dob;
+    document.getElementById("editAdmissionId").value = admissionId;
+    document.getElementById("editGuardianName").value = gName;
+    document.getElementById("editGuardianEmail").value = gEmail;
+    document.getElementById("editGuardianPhone").value = gPhone;
+    document.getElementById("editSchool").value = school;
+    document.getElementById("editClassgroup").value = classgroup;
+
+    // Set form action
+    form.action = `/superadmin/students/edit/${id}/`;
+    deleteBtn.href = `/superadmin/students/delete/${id}/`;
+  });
+</script> -->
+

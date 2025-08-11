@@ -1,0 +1,137 @@
+{% extends 'teacher/teacher_base.html' %}
+{% load static %}
+{% block title %}Support Tickets{% endblock %}
+{% block content %}
+
+<style>
+  .support-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+
+  .btn-create-ticket {
+    background-color: #0d6efd;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+  }
+
+  .btn-create-ticket:hover {
+    background-color: #084ec1;
+    color: white;
+  }
+
+  .ticket-card {
+    border-radius: 14px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    overflow: hidden;
+    background: #fff;
+  }
+
+  .table thead {
+    background-color: #f9fafb;
+  }
+
+  .table td,
+  .table th {
+    vertical-align: middle;
+  }
+
+  .modal-body p {
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .empty-state {
+    text-align: center;
+    color: #6c757d;
+    padding: 3rem 1rem;
+  }
+
+  .empty-state i {
+    font-size: 48px;
+    color: #dee2e6;
+    margin-bottom: 1rem;
+  }
+</style>
+
+<div class="col-md-10 main-content">
+
+  <div class="support-header">
+    <div>
+      <h5 class="mb-0"><i class="bi bi-life-preserver me-2"></i>My Support Tickets</h5>
+      <small class="text-muted" style="font-size: 13px;">View and track your submitted issues or requests</small>
+    </div>
+
+    <a href="{% url 'teacher:create_ticket' %}" class="btn btn-create-ticket">
+      <i class="bi bi-plus-lg me-1"></i> Create Ticket
+    </a>
+  </div>
+
+  {% if tickets %}
+    <div class="table-responsive ticket-card p-3">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Subject</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ticket in tickets %}
+            <tr>
+              <td>{{ ticket.subject|slice:":8"  }}....</td>
+              <td>
+                
+               <span class="badge bg-success">{{ ticket.get_status_display }}</span>
+              </td>
+              <td>{{ ticket.created_at|date:"M d, Y H:i" }}</td>
+              <td>
+                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#ticketModal{{ ticket.id }}">
+                  View
+                </button>
+              </td>
+            </tr>
+
+            <!-- Modal Box -->
+            <div class="modal fade" id="ticketModal{{ ticket.id }}" tabindex="-1" aria-labelledby="modalLabel{{ ticket.id }}" aria-hidden="true">
+              <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                <div class="modal-content p-3">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="modalLabel{{ ticket.id }}">
+                      <i class="bi bi-chat-left-text me-2"></i>{{ ticket.subject }}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body">
+                    <p><strong>Status:</strong> {{ ticket.get_status_display }}</p>
+                    <p><strong>Created:</strong> {{ ticket.created_at|date:"M d, Y H:i" }}</p>
+                    <hr>
+                    <p><strong>Message:</strong><br>{{ ticket.message|linebreaks }}</p>
+
+                  
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <i class="bi bi-inbox"></i>
+      <p class="mt-2">You haven't submitted any support tickets yet.</p>
+      <a href="{% url 'teacher:create_ticket' %}" class="btn btn-outline-primary mt-2">Create your first ticket</a>
+    </div>
+  {% endif %}
+</div>
+
+{% endblock %}

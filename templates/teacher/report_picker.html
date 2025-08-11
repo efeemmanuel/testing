@@ -1,0 +1,96 @@
+
+<div class="container py-4">
+  <h3>Attendance Report</h3>
+
+  <!-- Date range picker -->
+  <form id="rangeForm" class="row g-2 mb-3">
+    <div class="col-auto">
+      <label>From:</label>
+      <input type="date" id="from" name="from" class="form-control"
+             value="{{ default_from }}">
+    </div>
+    <div class="col-auto">
+      <label>To:</label>
+      <input type="date" id="to" name="to" class="form-control"
+             value="{{ default_to }}">
+    </div>
+    <div class="col-auto d-flex align-items-end">
+      <button class="btn btn-primary" type="submit">Load</button>
+    </div>
+    <div class="col-auto d-flex align-items-end">
+      <button id="quickWeek"  class="btn btn-outline-secondary me-1">This Week</button>
+      <button id="quickMonth" class="btn btn-outline-secondary">This Month</button>
+    </div>
+    <div class="col-auto d-flex align-items-end">
+      <a id="pdfBtn" class="btn btn-success disabled" target="_blank">📥 PDF</a>
+    </div>
+  </form>
+
+  <!-- Metrics -->
+  <div id="metrics" class="mb-3"></div>
+
+  <!-- Table -->
+  <table id="dataTable" class="table table-striped">
+    <thead><tr><th>Date</th><th>Time</th><th>Student</th><th>Status</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<script>
+const metricsDiv = document.getElementById("metrics");
+const tbody      = document.querySelector("#dataTable tbody");
+const pdfBtn     = document.getElementById("pdfBtn");
+
+function loadData(from, to) {
+  fetch(`{% url 'teacher:report_data_ajax' %}?from=${from}&to=${to}`)
+    .then(r => r.json())
+    .then(data => {
+      // metrics
+      metricsDiv.innerHTML =
+        `Total: ${data.metrics.total} &nbsp;|&nbsp; `
+      + `Present: <span class="text-success">${data.metrics.present}</span> &nbsp;|&nbsp; `
+      + `Absent: <span class="text-danger">${data.metrics.absent}</span>`;
+
+      // rows
+      tbody.innerHTML = "";
+      data.rows.forEach(r => {
+        const tr = document.createElement("tr");
+        tr.innerHTML =
+          `<td>${r.date}</td><td>${r.time}</td><td>${r.name}</td><td>${r.status}</td>`;
+        tbody.appendChild(tr);
+      });
+
+      // enable PDF link
+      pdfBtn.classList.remove("disabled");
+      pdfBtn.href = `{% url 'teacher:report_pdf' %}?from=${from}&to=${to}`;
+    });
+}
+
+const form = document.getElementById("rangeForm");
+form.addEventListener("submit", e => {
+  e.preventDefault();
+  loadData(from.value, to.value);
+});
+
+document.getElementById("quickWeek").onclick = e => {
+  e.preventDefault();
+  const today = new Date();
+  const first = new Date(today.setDate(today.getDate() - today.getDay()));
+  from.valueAsDate = first;
+  to.valueAsDate   = new Date();
+  form.dispatchEvent(new Event("submit"));
+};
+
+document.getElementById("quickMonth").onclick = e => {
+  e.preventDefault();
+  const today = new Date();
+  const first = new Date(today.getFullYear(), today.getMonth(), 1);
+  from.valueAsDate = first;
+  to.valueAsDate   = new Date();
+  form.dispatchEvent(new Event("submit"));
+};
+
+// auto‑load default range on first render
+form.dispatchEvent(new Event("submit"));
+</script>
+

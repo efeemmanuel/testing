@@ -1,0 +1,63 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Teacher's Daily Attendance</title>
+  <style>
+    body { font-family: Helvetica, sans-serif; font-size: 12px; color: #333; }
+    h2, h4 { margin: 5px 0; text-align: center; }
+    .details { margin-bottom: 15px; }
+    .details span { display: block; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #bbb; padding: 8px; text-align: left; }
+    th { background-color: #f0f0f0; }
+    .status-present { color: green; font-weight: bold; }
+    .status-absent { color: red; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img src="{{ school.logo.url }}" alt="Logo" style="height: 50px;">
+    <h2>{{ school.name }}</h2>
+    <h4>Attendance Summary - {{ date|date:"F j, Y" }}</h4>
+  </div>
+
+  <div class="details">
+    <span><strong>Teacher:</strong> {{ teacher.teacher_fullname }}</span>
+    <span><strong>Total Students:</strong> {{ total_students }}</span>
+    <span><strong>Present:</strong> {{ total_present }}</span>
+    <span><strong>Absent:</strong> {{ total_absent }}</span>
+    <span><strong>Overall Attendance:</strong> {{ overall_percentage }}%</span>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <!-- <th>#</th> -->
+        <th>Class</th>
+        <th>Total</th>
+        <th>Present</th>
+        <th>Absent</th>
+        <th>%</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for group in class_data %}
+      <tr>
+        <!-- <td>{{ forloop.counter }}</td> -->
+        <td>{{ group.name }}</td>
+        <td>{{ group.total }}</td>
+        <td class="status-present">{{ group.present }}</td>
+        <td class="status-absent">{{ group.absent }}</td>
+        <td>{{ group.percentage }}%</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6">No attendance data available.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- <p style="text-align:center; margin-top: 30px; font-size: 11px;">Generated on {{ date|date:"F j, Y" }}</p> -->
+</body>
+</html>

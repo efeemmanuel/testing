@@ -1,0 +1,123 @@
+{% extends "teacher/teacher_base.html" %}
+{% load static %}
+
+{% block title %}Inbox{% endblock %}
+
+{% block content %}
+<style>
+
+
+  .inbox-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    color: #1e293b;
+  }
+  .list-group-item {
+    border: none;
+    border-radius: 10px;
+    margin-bottom: 0.5rem;
+    transition: background 0.2s ease;
+  }
+  .list-group-item:hover {
+    background-color: #f1f5f9;
+  }
+  .badge-unread {
+    font-size: 0.7rem;
+    padding: 5px 8px;
+    border-radius: 12px;
+  }
+  .modal-content {
+    border-radius: 16px;
+  }
+  .modal-header {
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .modal-title {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 20px;
+  }
+</style>
+
+<div class="col-md-10 main-content">
+<div class="inbox-wrapper">
+  <div class="inbox-card">
+    <h4 class="inbox-title">Inbox</h4>
+
+    {% if messages %}
+      <div class="list-group">
+        {% for m in messages %}
+          <a href="#"
+             class="list-group-item list-group-item-action d-flex justify-content-between align-items-start"
+             data-bs-toggle="modal"
+             data-bs-target="#messageModal"
+             data-id="{{ m.id }}"
+             data-subject="{{ m.subject }}"
+             data-body="{{ m.body }}"
+             data-sender="{{ m.sender.email }}"
+             data-date="{{ m.timestamp|date:'M d, Y H:i' }}">
+            <div>
+              <div class="fw-semibold text-dark">{{ m.subject }}</div>
+              <small class="text-muted">From: {{ m.sender.email }}</small>
+            </div>
+            {% if not m.is_read %}
+              <span class="badge bg-primary badge-unread">Unread</span>
+            {% endif %}
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="alert alert-info">No messages available.</div>
+    {% endif %}
+  </div>
+</div>
+
+
+
+<!-- View Message Modal -->
+<div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-light">
+        <h5 class="modal-title" id="messageModalLabel">Message Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <h6><strong>Subject:</strong> <span id="modalSubject"></span></h6>
+        <p><strong>From:</strong> <span id="modalSender"></span></p>
+        <p><strong>Date:</strong> <span id="modalDate"></span></p>
+        <hr>
+        <p id="modalBody"></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('[data-bs-target="#messageModal"]').forEach(button => {
+  button.addEventListener("click", () => {
+    const subject = button.getAttribute("data-subject");
+    const body = button.getAttribute("data-body");
+    const sender = button.getAttribute("data-sender");
+    const date = button.getAttribute("data-date");
+    const msgId = button.getAttribute("data-id");
+
+    document.getElementById("modalSubject").textContent = subject;
+    document.getElementById("modalBody").textContent = body;
+    document.getElementById("modalSender").textContent = sender;
+    document.getElementById("modalDate").textContent = date;
+
+    fetch(`/teacher/messages/${msgId}/`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}",
+        "Content-Type": "application/json",
+      },
+    }).then(() => {
+      button.querySelector(".badge")?.remove();
+    });
+  });
+});
+</script>
+{% endblock %}

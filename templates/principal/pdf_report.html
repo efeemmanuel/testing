@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 13px; }
+    h1 { text-align: center; font-size: 20px; margin-bottom: 5px; }
+    h4 { text-align: center; font-size: 14px; margin-top: 0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { border: 1px solid #555; padding: 6px; text-align: center; }
+    .summary { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>{{ school.name }}</h1>
+  <h4>Attendance Report for {{ date }}</h4>
+  <p><strong>Principal:</strong> {{ principal.first_name }} {{ principal.last_name }}</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Class</th>
+        <th>Total</th>
+        <th>Present</th>
+        <th>Absent</th>
+        <th>% Present</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in class_data %}
+        <tr>
+          <td>{{ item.name }}</td>
+          <td>{{ item.total }}</td>
+          <td>{{ item.present }}</td>
+          <td>{{ item.absent }}</td>
+          <td>{{ item.percentage }}%</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="summary">
+    <p><strong>Total Students:</strong> {{ total_students }}</p>
+    <p><strong>Total Present:</strong> {{ total_present }}</p>
+    <p><strong>Total Absent:</strong> {{ total_absent }}</p>
+    <p><strong>Overall Attendance:</strong> {{ overall_percentage }}%</p>
+  </div>
+</body>
+</html>

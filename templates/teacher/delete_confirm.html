@@ -1,0 +1,11 @@
+<!-- {% extends "base.html" %}
+{% block content %}
+<div class="container py-4">
+  <h3>Delete {{ student.firstname }} {{ student.lastname }}?</h3>
+  <form method="post">
+    {% csrf_token %}
+    <button class="btn btn-danger">Yes, delete</button>
+    <a class="btn btn-secondary" href="{% url 'teacher:manage_students' %}">Cancel</a>
+  </form>
+</div>
+{% endblock %} -->

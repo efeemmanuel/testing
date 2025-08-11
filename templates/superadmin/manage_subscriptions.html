@@ -1,0 +1,273 @@
+{% extends "superadmin/superadmin_base.html" %}
+{% load static %}
+{% block title %}Super Admin Dashboard{% endblock %}
+
+{% block content %}
+
+<style>
+  .card {
+    border-radius: 1rem;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+    background-color: #fff;
+  }
+
+  .form-label {
+    font-weight: 500;
+  }
+
+  .form-control, .form-select {
+    border-radius: 0.5rem;
+    padding: 0.6rem 0.9rem;
+    font-size: 0.95rem;
+  }
+
+  .btn {
+    border-radius: 0.5rem;
+    font-weight: 500;
+  }
+
+  .btn-primary {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+  }
+
+  .table thead {
+    background-color: #f9fafb;
+  }
+
+  .table td, .table th {
+    vertical-align: middle;
+  }
+
+  .modal-header {
+    background-color: #f5f8ff;
+    border-bottom: 1px solid #e1e7ef;
+  }
+
+  .modal-title {
+    font-weight: 600;
+    color: #0d6efd;
+  }
+</style>
+
+<div class="col-md-10 p-4">
+  <h3 class="mb-4 fw-semibold text-primary">📊 School Subscriptions</h3>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="card p-4">
+    <h5 class="mb-3 fw-semibold">Manage Existing Subscriptions</h5>
+    <div class="table-responsive">
+      <table class="table table-striped table-hover align-middle rounded">
+        <thead class="table-light">
+          <tr>
+            <th>School</th>
+            <th>Current Plan</th>
+            <th>Expiry</th>
+            <th>Days Remaining</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sub in subscriptions %}
+            <tr>
+              <td>{{ sub.school.name }}</td>
+              <td>{{ sub.plan.get_name_display }}</td>
+              <td>{{ sub.expiry_date }}</td>
+              <td>
+                {% if sub.days_remaining > 7 %}
+                  <span class="badge bg-success">{{ sub.days_remaining }} days</span>
+                {% elif sub.days_remaining > 0 %}
+                  <span class="badge bg-warning text-dark">{{ sub.days_remaining }} days</span>
+                {% else %}
+                  <span class="badge bg-danger">Expired</span>
+                {% endif %}
+              </td>
+              <td>
+                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editModal{{ sub.id }}">
+                  Edit
+                </button>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modals -->
+  {% for sub in subscriptions %}
+    <div class="modal fade" id="editModal{{ sub.id }}" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <form method="post" class="modal-content" action="{% url 'superadmin:update_subscription' sub.id %}">
+          {% csrf_token %}
+          <div class="modal-header">
+            <h5 class="modal-title">Edit Subscription - {{ sub.school.name }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label" for="planSelect{{ sub.id }}">Plan</label>
+              <select id="planSelect{{ sub.id }}" name="plan" class="form-select" required>
+                {% for plan in plans %}
+                  <option value="{{ plan.id }}" {% if plan == sub.plan %}selected{% endif %}>
+                    {{ plan.get_name_display }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label" for="expiry{{ sub.id }}">Expiry Date</label>
+              <input id="expiry{{ sub.id }}" type="date" name="expiry_date" value="{{ sub.expiry_date }}" class="form-control" required>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Main Content -->
+<div class="col-md-10 p-4">
+  <h3 class="mb-4">School Subscriptions</h3>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- Assign Form -->
+  <!-- <div class="card mb-4">
+    <div class="card-header">
+      <strong>Assign New Subscription</strong>
+    </div>
+    <div class="card-body">
+      <form method="post">
+        {% csrf_token %}
+        <div class="row g-3 align-items-end">
+          <div class="col-md-4">
+            {{ form.school.label_tag }} {{ form.school }}
+          </div>
+          <div class="col-md-3">
+            {{ form.plan.label_tag }} {{ form.plan }}
+          </div>
+          <div class="col-md-3">
+            {{ form.expiry_date.label_tag }} {{ form.expiry_date }}
+          </div>
+          <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">Assign</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div> -->
+
+  <!-- Subscription Table -->
+  <h5 class="mb-3">Manage Existing Subscriptions</h5>
+  <table class="table table-bordered">
+    <thead class="table-light">
+      <tr>
+        <th>School</th>
+        <th>Current Plan</th>
+        <th>Expiry</th>
+        <th>Days Remaining</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for sub in subscriptions %}
+        <tr>
+          <td>{{ sub.school.name }}</td>
+          <td>{{ sub.plan.get_name_display }}</td>
+          <td>{{ sub.expiry_date }}</td>
+          <td>{{ sub.days_remaining }}</td>
+          <td>
+            <button class="btn btn-sm btn-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#editModal{{ sub.id }}">
+              Edit
+            </button>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Modals Rendered After Table -->
+  {% for sub in subscriptions %}
+    <div class="modal fade" id="editModal{{ sub.id }}" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <form method="post" class="modal-content" action="{% url 'superadmin:update_subscription' sub.id %}">
+          {% csrf_token %}
+          <div class="modal-header">
+            <h5 class="modal-title">Edit Subscription - {{ sub.school.name }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="planSelect{{ sub.id }}">Plan</label>
+              <select id="planSelect{{ sub.id }}" name="plan" class="form-select" required>
+                {% for plan in plans %}
+                  <option value="{{ plan.id }}" {% if plan == sub.plan %}selected{% endif %}>
+                    {{ plan.get_name_display }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label for="expiry{{ sub.id }}">Expiry Date</label>
+              <input id="expiry{{ sub.id }}" type="date" name="expiry_date" value="{{ sub.expiry_date }}" class="form-control" required>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-success">Save Changes</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+
+</div>

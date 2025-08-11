@@ -1,0 +1,334 @@
+{% extends "superadmin/superadmin_base.html" %}
+{% load static %}
+{% block title %}Super Admin Dashboard{% endblock %}
+
+{% block content %}
+
+<!-- Custom Styles -->
+<style>
+  .card {
+    border-radius: 1rem;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
+  }
+
+  .table thead {
+    background-color: #f8f9fa;
+    font-weight: 600;
+  }
+
+  .table td, .table th {
+    vertical-align: middle;
+    padding: 0.9rem 1rem;
+  }
+
+  .table-hover tbody tr:hover {
+    background-color: #f0f4ff;
+  }
+
+  .modal-content {
+    border-radius: 1rem;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  @media (max-width: 768px) {
+    .table-responsive-stack td,
+    .table-responsive-stack th {
+      display: block;
+      text-align: right;
+    }
+    .table-responsive-stack td::before {
+      float: left;
+      font-weight: bold;
+      content: attr(data-label);
+    }
+  }
+</style>
+
+<div class="col-md-10 p-4">
+  <h3 class="mb-4 fw-semibold">Support Tickets</h3>
+
+  <!-- Summary Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-sm-6 col-md-3">
+      <div class="card text-center p-3">
+        <h5 class="mb-0">{{ total_count }}</h5>
+        <small>Total Tickets</small>
+      </div>
+    </div>
+    <div class="col-sm-6 col-md-3">
+      <div class="card text-center p-3">
+        <h5 class="mb-0 text-primary">{{ new_count }}</h5>
+        <small>New (last 12h)</small>
+      </div>
+    </div>
+    <div class="col-sm-6 col-md-3">
+      <div class="card text-center p-3">
+        <h5 class="mb-0 text-warning">{{ in_progress_count }}</h5>
+        <small>In Progress</small>
+      </div>
+    </div>
+    <div class="col-sm-6 col-md-3">
+      <div class="card text-center p-3">
+        <h5 class="mb-0 text-success">{{ resolved_count }}</h5>
+        <small>Resolved</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ticket Table -->
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Sender</th>
+          <th>Message Preview</th>
+          <th>Status</th>
+          <th>Date</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ticket in tickets %}
+          <tr>
+            <!-- Sender -->
+            <td>
+              <strong>{{ ticket.creator.get_full_name|default:ticket.creator.email }}</strong><br>
+              <small class="text-muted">{{ ticket.creator.email }}</small><br>
+              <small class="text-muted">
+                {% if ticket.creator.principal_profile %}
+                  {{ ticket.creator.principal_profile.school.name }}
+                {% elif ticket.creator.teacher_profile %}
+                  {{ ticket.creator.teacher_profile.school.name }}
+                {% endif %}
+              </small>
+            </td>
+
+            <!-- Message -->
+            <td>{{ ticket.message|truncatechars:60 }}</td>
+
+            <!-- Status -->
+            <td>
+              <form method="POST" action="{% url 'superadmin:update_ticket_status' ticket.id %}">
+                {% csrf_token %}
+                <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                  {% for key, label in status_choices %}
+                    <option value="{{ key }}" {% if ticket.status == key %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
+              </form>
+            </td>
+
+            <!-- Date -->
+            <td>{{ ticket.created_at|date:"M d, Y H:i" }}</td>
+
+            <!-- View Button -->
+            <td>
+              <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#ticketModal{{ ticket.id }}">
+                View
+              </button>
+            </td>
+          </tr>
+
+          <!-- Modal -->
+          <div class="modal fade" id="ticketModal{{ ticket.id }}" tabindex="-1">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Ticket Details</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  <p><strong>Subject:</strong> {{ ticket.subject }}</p>
+                  <p><strong>Sender:</strong> {{ ticket.creator.get_full_name|default:ticket.creator.email }}</p>
+                  <p><strong>Message:</strong><br>{{ ticket.message|linebreaks }}</p>
+                  <p><strong>Status:</strong> {{ ticket.get_status_display }}</p>
+                  <p><strong>Created:</strong> {{ ticket.created_at|date:"M d, Y H:i" }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Bootstrap Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Main Content -->
+<div class="col-md-10 p-4">
+
+
+
+<div class="row mb-4">
+  <div class="col-md-3">
+    <div class="card text-center p-3 shadow-sm border-0">
+      <h5 class="mb-0">{{ total_count }}</h5>
+      <small>Total Tickets</small>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-center p-3 shadow-sm border-0">
+      <h5 class="mb-0 text-primary">{{ new_count }}</h5>
+      <small>New (last 12h)</small>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-center p-3 shadow-sm border-0">
+      <h5 class="mb-0 text-warning">{{ in_progress_count }}</h5>
+      <small>In Progress</small>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-center p-3 shadow-sm border-0">
+      <h5 class="mb-0 text-success">{{ resolved_count }}</h5>
+      <small>Resolved</small>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+<!-- Ensure Bootstrap CSS and JS are loaded in your base template -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<table class="table table-hover align-middle">
+  <thead class="table-light">
+    <tr>
+      <th>Sender</th>
+      <th>Message Preview</th>
+      <th>Status</th>
+      <th>Date</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for ticket in tickets %}
+      <tr>
+        <!-- Sender Info -->
+        <td>
+          <strong>{{ ticket.creator.get_full_name|default:ticket.creator.email }}</strong><br>
+          <small>{{ ticket.creator.email }}</small><br>
+          <small class="text-muted">
+            {% if ticket.creator.principal_profile %}
+              {{ ticket.creator.principal_profile.school.name }}
+            {% elif ticket.creator.teacher_profile %}
+              {{ ticket.creator.teacher_profile.school.name }}
+            {% endif %}
+          </small>
+        </td>
+
+        <!-- Message Preview -->
+        <td>{{ ticket.message|truncatechars:60 }}</td>
+
+        <!-- Status Dropdown -->
+        <td>
+          <form method="POST" action="{% url 'superadmin:update_ticket_status' ticket.id %}">
+            {% csrf_token %}
+          <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+              {% for key, label in status_choices %}
+                <option value="{{ key }}" {% if ticket.status == key %}selected{% endif %}>
+                  {{ label }}
+                </option>
+              {% endfor %}
+            </select>
+          </form>
+        </td>
+
+        <!-- Date -->
+        <td>{{ ticket.created_at|date:"M d, Y H:i" }}</td>
+
+        <!-- Action: Modal trigger -->
+        <td>
+          <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#ticketModal{{ ticket.id }}">
+            View
+          </button>
+        </td>
+      </tr>
+
+      <!-- Ticket Modal -->
+      <div class="modal fade" id="ticketModal{{ ticket.id }}" tabindex="-1" aria-labelledby="ticketModalLabel{{ ticket.id }}" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="ticketModalLabel{{ ticket.id }}">Ticket Details</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+              <p><strong>Subject:</strong> {{ ticket.subject }}</p>
+              <p><strong>Sender:</strong> {{ ticket.creator.get_full_name|default:ticket.creator.email }}</p>
+              <p><strong>Message:</strong><br>{{ ticket.message|linebreaks }}</p>
+              <p><strong>Status:</strong> {{ ticket.get_status_display }}</p>
+              <p><strong>Created:</strong> {{ ticket.created_at|date:"M d, Y H:i" }}</p>
+
+              <hr>
+              <!-- <h6>Responses</h6>
+              {% for response in ticket.responses.all %}
+                <div class="mb-3">
+                  <strong>{{ response.responder.get_full_name|default:response.responder.email }}</strong>
+                  <small class="text-muted">({{ response.created_at|date:"M d, Y H:i" }})</small>
+                  <p class="mb-0">{{ response.message|linebreaks }}</p>
+                </div>
+              {% empty %}
+                <p class="text-muted">No responses yet.</p>
+              {% endfor %}
+
+              <hr>
+              <form method="POST" action="{% url 'superadmin:update_ticket_status' ticket.id %}">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-sm btn-success">Send Response</button>
+              </form> -->
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </tbody>
+</table>
+
+
+
+
+
+</div>

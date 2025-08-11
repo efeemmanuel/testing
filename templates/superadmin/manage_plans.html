@@ -1,0 +1,182 @@
+{% extends "superadmin/superadmin_base.html" %}
+{% load static %}
+{% block title %}Super Admin Dashboard{% endblock %}
+
+{% block content %}
+
+<!-- Custom Table Styles -->
+<style>
+  .table-responsive {
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+  }
+
+  .table {
+    font-size: 0.95rem;
+    border-collapse: separate;
+    border-spacing: 0 0.5rem;
+  }
+
+  .table thead {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #343a40;
+  }
+
+  .table thead th {
+    border: none;
+    padding: 1rem;
+  }
+
+  .table tbody tr {
+    background-color: #fff;
+    transition: background-color 0.2s ease-in-out;
+  }
+
+  .table tbody tr:hover {
+    background-color: #f0f4ff;
+  }
+
+  .table td {
+    border: none;
+    vertical-align: middle;
+    padding: 1rem;
+  }
+
+  .modal-content {
+    border-radius: 1rem;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  }
+</style>
+
+<!-- Main Content -->
+<div class="col-md-10 p-4">
+  <h3 class="mb-4 fw-semibold">Manage Plans</h3>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Name</th>
+          <th>Details</th>
+          <th>Limits</th>
+          <th>Features</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for plan in plans %}
+          <tr>
+            <td>{{ plan.get_name_display }}</td>
+            <td>${{ plan.price }} / {{ plan.duration_days }} days</td>
+            <td>
+              Teachers: {{ plan.max_teachers|default:"∞" }}<br>
+              Students: {{ plan.max_students|default:"∞" }}
+            </td>
+            <td>
+              {% if plan.has_email_notifications %}✔ Email<br>{% endif %}
+              {% if plan.has_sms_notifications %}✔ SMS<br>{% endif %}
+              {% if plan.has_advanced_reports %}✔ Reports<br>{% endif %}
+              {% if plan.has_ml_analytics %}✔ ML<br>{% endif %}
+              {% if plan.has_custom_branding %}✔ Branding<br>{% endif %}
+            </td>
+            <td>
+              <button class="btn btn-sm btn-outline-primary mb-2"
+                      data-bs-toggle="modal"
+                      data-bs-target="#editModal{{ plan.id }}">
+                Edit
+              </button>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modals -->
+  {% for plan in plans %}
+    <div class="modal fade" id="editModal{{ plan.id }}" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="plan_id" value="{{ plan.id }}">
+            <div class="modal-header">
+              <h5 class="modal-title">Edit {{ plan.get_name_display }}</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label class="form-label">Price</label>
+                <input type="number" step="0.01" name="price" class="form-control" value="{{ plan.price }}" required>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Duration (days)</label>
+                <input type="number" name="duration_days" class="form-control" value="{{ plan.duration_days }}" required>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Max Teachers</label>
+                <input type="number" name="max_teachers" class="form-control" value="{{ plan.max_teachers }}">
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Max Students</label>
+                <input type="number" name="max_students" class="form-control" value="{{ plan.max_students }}">
+              </div>
+
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="has_email_notifications" {% if plan.has_email_notifications %}checked{% endif %}>
+                <label class="form-check-label">Email Notifications</label>
+              </div>
+
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="has_sms_notifications" {% if plan.has_sms_notifications %}checked{% endif %}>
+                <label class="form-check-label">SMS Notifications</label>
+              </div>
+
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="has_advanced_reports" {% if plan.has_advanced_reports %}checked{% endif %}>
+                <label class="form-check-label">Advanced Reports</label>
+              </div>
+
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="has_ml_analytics" {% if plan.has_ml_analytics %}checked{% endif %}>
+                <label class="form-check-label">ML Analytics</label>
+              </div>
+
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="has_custom_branding" {% if plan.has_custom_branding %}checked{% endif %}>
+                <label class="form-check-label">Custom Branding</label>
+              </div>
+            </div>
+
+            <div class="modal-footer d-flex justify-content-between">
+              <button type="submit" class="btn btn-success">Save Changes</button>
+          </form>
+
+          <form method="post" action="{% url 'superadmin:delete_plan' plan.id %}" onsubmit="return confirm('Are you sure you want to delete this plan?');">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Delete Plan</button>
+          </form>
+            </div>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+{% endblock %}

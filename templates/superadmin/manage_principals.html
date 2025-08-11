@@ -1,0 +1,411 @@
+{% extends "superadmin/superadmin_base.html" %}
+{% load static %}
+{% block title %}Super Admin Dashboard{% endblock %}
+
+{% block content %}
+
+<style>
+  .card {
+    border-radius: 1rem;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+    background-color: #fff;
+    overflow: hidden;
+  }
+
+  .card-header {
+    font-weight: 600;
+    background-color: #0d6efd;
+    color: #fff;
+    padding: 1rem 1.25rem;
+  }
+
+  .form-label {
+    font-weight: 500;
+  }
+
+  .form-control, .form-select {
+    border-radius: 0.5rem;
+    padding: 0.6rem 0.9rem;
+    font-size: 0.95rem;
+  }
+
+  .btn {
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+  }
+
+  .btn-primary {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+  }
+
+  .btn-outline-primary {
+    color: #0d6efd;
+    border-color: #0d6efd;
+  }
+
+  .btn-outline-primary:hover {
+    background-color: #0d6efd;
+    color: #fff;
+  }
+
+  .table thead {
+    background-color: #f8f9fa;
+  }
+
+  .rounded-circle {
+    object-fit: cover;
+  }
+</style>
+
+<div class="col-md-10 p-4">
+  <h3 class="mb-4 fw-semibold text-primary">Manage Principals</h3>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- Add Principal Form -->
+  <div class="card mb-4">
+    <div class="card-header">➕ Add New Principal</div>
+    <form method="post" enctype="multipart/form-data" action="{% url 'superadmin:manage_principals' %}">
+      {% csrf_token %}
+      <div class="card-body row g-3">
+        <div class="col-md-6">
+          <label class="form-label">First Name</label>
+          <input type="text" name="first_name" class="form-control" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Last Name</label>
+          <input type="text" name="last_name" class="form-control" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Phone Number</label>
+          <input type="text" name="phone_number" class="form-control">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Email (for login)</label>
+          <input type="email" name="email" class="form-control" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Password</label>
+          <input type="password" name="password" class="form-control" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">School</label>
+          <select name="school" class="form-select" required>
+            {% for school in schools %}
+              <option value="{{ school.id }}">{{ school.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-12">
+          <label class="form-label">Profile Picture</label>
+          <input type="file" name="profile_picture" class="form-control">
+        </div>
+      </div>
+      <div class="card-footer text-end bg-white border-0">
+        <button type="submit" class="btn btn-primary">Create Principal</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Existing Principals Table -->
+  <div class="table-responsive">
+    <table class="table table-bordered align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Profile</th>
+          <th>Name</th>
+          <th>Phone</th>
+          <th>School</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for principal in principals %}
+          <tr>
+            <td>
+              {% if principal.profile_picture %}
+                <img src="{{ principal.profile_picture.url }}" width="50" height="50" class="rounded-circle">
+              {% else %}
+                <span class="text-muted">No Image</span>
+              {% endif %}
+            </td>
+            <td>{{ principal.first_name }} {{ principal.last_name }}</td>
+            <td>{{ principal.phone_number }}</td>
+            <td>{{ principal.school.name }}</td>
+            <td>
+              <button class="btn btn-sm btn-outline-primary mb-1" data-bs-toggle="modal" data-bs-target="#editModal{{ principal.id }}">Edit</button>
+              <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ principal.id }}">Delete</button>
+            </td>
+          </tr>
+
+          <!-- Edit Modal -->
+          <div class="modal fade" id="editModal{{ principal.id }}" tabindex="-1">
+            <div class="modal-dialog">
+              <form method="post" enctype="multipart/form-data" action="{% url 'superadmin:update_principal' principal.id %}" class="modal-content">
+                {% csrf_token %}
+                <div class="modal-header">
+                  <h5 class="modal-title">Edit {{ principal.first_name }}</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  <div class="mb-2">
+                    <label class="form-label">First Name</label>
+                    <input type="text" name="first_name" value="{{ principal.first_name }}" class="form-control" required>
+                  </div>
+                  <div class="mb-2">
+                    <label class="form-label">Last Name</label>
+                    <input type="text" name="last_name" value="{{ principal.last_name }}" class="form-control" required>
+                  </div>
+                  <div class="mb-2">
+                    <label class="form-label">Phone Number</label>
+                    <input type="text" name="phone_number" value="{{ principal.phone_number }}" class="form-control">
+                  </div>
+                  <div class="mb-2">
+                    <label class="form-label">School</label>
+                    <select name="school" class="form-select">
+                      {% for school in schools %}
+                        <option value="{{ school.id }}" {% if school == principal.school %}selected{% endif %}>{{ school.name }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="mb-2">
+                    <label class="form-label">Profile Picture</label>
+                    <input type="file" name="profile_picture" class="form-control">
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="submit" class="btn btn-primary">Save Changes</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Delete Modal -->
+          <div class="modal fade" id="deleteModal{{ principal.id }}" tabindex="-1">
+            <div class="modal-dialog">
+              <form method="post" action="{% url 'superadmin:delete_principal' principal.id %}" class="modal-content">
+                {% csrf_token %}
+                <div class="modal-header">
+                  <h5 class="modal-title text-danger">Delete Principal</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  Are you sure you want to delete <strong>{{ principal.first_name }} {{ principal.last_name }}</strong>?
+                </div>
+                <div class="modal-footer">
+                  <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Main Content -->
+<div class="col-md-10 p-4">
+  <h3 class="mb-4">Manage Principals</h3>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- Add Principal Form -->
+  <div class="card mb-4">
+    <div class="card-header bg-success text-white">
+      Add New Principal
+    </div>
+    <form method="post" enctype="multipart/form-data" action="{% url 'superadmin:manage_principals' %}">
+      {% csrf_token %}
+      <div class="card-body row g-3">
+        <div class="col-md-6">
+          <label>First Name</label>
+          <input type="text" name="first_name" class="form-control" required>
+        </div>
+        <div class="col-md-6">
+          <label>Last Name</label>
+          <input type="text" name="last_name" class="form-control" required>
+        </div>
+        <div class="col-md-6">
+          <label>Phone Number</label>
+          <input type="text" name="phone_number" class="form-control">
+        </div>
+        <div class="col-md-6">
+          <label>Email (for login)</label>
+          <input type="email" name="email" class="form-control" required>
+        </div>
+        <div class="col-md-6">
+          <label>Password</label>
+          <input type="password" name="password" class="form-control" required>
+        </div>
+        <div class="col-md-6">
+          <label>School</label>
+          <select name="school" class="form-select" required>
+            {% for school in schools %}
+              <option value="{{ school.id }}">{{ school.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-12">
+          <label>Profile Picture</label>
+          <input type="file" name="profile_picture" class="form-control">
+        </div>
+      </div>
+      <div class="card-footer text-end">
+        <button type="submit" class="btn btn-success">Create Principal</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Existing Principals Table -->
+  <table class="table table-bordered">
+    <thead class="table-light">
+      <tr>
+        <th>Profile</th>
+        <th>Name</th>
+        <th>Phone</th>
+        <th>School</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for principal in principals %}
+        <tr>
+          <td>
+            {% if principal.profile_picture %}
+              <img src="{{ principal.profile_picture.url }}" width="50" height="50" class="rounded-circle">
+            {% else %}
+              <span class="text-muted">No Image</span>
+            {% endif %}
+          </td>
+          <td>{{ principal.first_name }} {{ principal.last_name }}</td>
+          <td>{{ principal.phone_number }}</td>
+          <td>{{ principal.school.name }}</td>
+          <td>
+            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editModal{{ principal.id }}">Edit</button>
+            <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ principal.id }}">Delete</button>
+          </td>
+        </tr>
+
+        <!-- Edit Modal -->
+        <div class="modal fade" id="editModal{{ principal.id }}" tabindex="-1">
+          <div class="modal-dialog">
+            <form method="post" enctype="multipart/form-data" action="{% url 'superadmin:update_principal' principal.id %}" class="modal-content">
+              {% csrf_token %}
+              <div class="modal-header">
+                <h5 class="modal-title">Edit {{ principal.first_name }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                <div class="mb-2">
+                  <label>First Name</label>
+                  <input type="text" name="first_name" value="{{ principal.first_name }}" class="form-control" required>
+                </div>
+                <div class="mb-2">
+                  <label>Last Name</label>
+                  <input type="text" name="last_name" value="{{ principal.last_name }}" class="form-control" required>
+                </div>
+                <div class="mb-2">
+                  <label>Phone Number</label>
+                  <input type="text" name="phone_number" value="{{ principal.phone_number }}" class="form-control">
+                </div>
+                <div class="mb-2">
+                  <label>School</label>
+                  <select name="school" class="form-select">
+                    {% for school in schools %}
+                      <option value="{{ school.id }}" {% if school == principal.school %}selected{% endif %}>{{ school.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="mb-2">
+                  <label>Profile Picture</label>
+                  <input type="file" name="profile_picture" class="form-control">
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="submit" class="btn btn-success">Save Changes</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Delete Modal -->
+        <div class="modal fade" id="deleteModal{{ principal.id }}" tabindex="-1">
+          <div class="modal-dialog">
+            <form method="post" action="{% url 'superadmin:delete_principal' principal.id %}" class="modal-content">
+              {% csrf_token %}
+              <div class="modal-header">
+                <h5 class="modal-title text-danger">Delete Principal</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                Are you sure you want to delete <strong>{{ principal.first_name }} {{ principal.last_name }}</strong>?
+              </div>
+              <div class="modal-footer">
+                <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+
+</div>

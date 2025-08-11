@@ -1,0 +1,269 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Principal Dashboard{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+
+
+
+:root {
+  --primary: #111722;
+  --accent: #4f46e5;
+  --bg-light: #ffffff;
+  --text-muted: #6b7280;
+  --border-color: #e5e7eb;
+  --shadow-color: rgba(0, 0, 0, 0.05);
+}
+
+* {
+  transition: all 0.2s ease-in-out;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #f4f6f9;
+  font-family: 'Manrope', sans-serif;
+  color: var(--primary);
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+/* Sidebar */
+.sidebar {
+  min-height: 100vh;
+  background-color: var(--bg-light);
+  padding: 2rem 1rem;
+  border-right: 1px solid var(--border-color);
+  
+}
+
+.sidebar a,
+.mobile-sidebar a {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 0.5rem 0.75rem;
+  color: var(--text-muted);
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  text-decoration: none !important;
+  border-radius: 8px;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.sidebar a:hover,
+.mobile-sidebar a:hover {
+  background-color: #f3f4f6;
+  color: var(--primary);
+}
+
+.sidebar a i,
+.mobile-sidebar a i {
+  margin-right: 0.6rem;
+  font-size: 12px;
+  color: inherit;
+}
+
+.sidebar a.active,
+.mobile-sidebar a.active {
+  background-color: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.sidebar a.active i,
+.mobile-sidebar a.active i {
+  color: #fff;
+}
+
+.down-sidebar {
+  margin-top: -4%;
+}
+.logout-button {
+  color: #6b7280 !important;
+  text-decoration: none !important;
+}
+.logout-button i {
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+.logout-button:hover i {
+  opacity: 1;
+}
+
+/* Typography */
+.dashboard-heading {
+  font-weight: 700;
+  font-size: 30px;
+  margin-bottom: 1.4rem;
+  color: var(--primary);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </style>
+</head>
+<body>
+
+ 
+
+  
+  <!-- Backdrop -->
+  <div class="menu-backdrop" id="menuBackdrop"></div>
+
+  <div class="container-fluid">
+    <div class="row">
+      <!-- Hamburger for mobile -->
+      <div class="d-md-none d-flex justify-content-between align-items-center p-2 bg-light">
+        <button class="btn btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#mobileMenu">
+          <i class="fas fa-bars"></i>
+        </button>
+        <strong>Super Admin Dashboard</strong>
+      </div>
+
+<!-- Mobile Menu -->
+<div class="collapse d-md-none" id="mobileMenu">
+  <div class="mobile-sidebar d-flex flex-column fullscreen-menu position-relative" id="mobileSidebarMenu">
+    <button class="close-menu-btn" id="closeMenuBtn" aria-label="Close">
+      <i class="fas fa-times"></i>
+    </button>
+    <nav class="mb-4">
+      <a href="{% url 'superadmin:dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        <i class="fas fa-chart-line"></i> Overview
+      </a>
+
+      <a href="{% url 'superadmin:manage_schools' %}" class="{% if request.resolver_match.url_name == 'manage_schools' %}active{% endif %}">
+        <i class="fas fa-school"></i> Manage School
+      </a>
+
+      <a href="{% url 'superadmin:manage_teachers' %}" class="{% if request.resolver_match.url_name == 'manage_teachers' %}active{% endif %}">
+        <i class="fas fa-chalkboard-teacher"></i> Manage Teachers
+      </a>
+
+      <a href="{% url 'superadmin:manage_students' %}" class="{% if request.resolver_match.url_name == 'manage_students' %}active{% endif %}">
+        <i class="fas fa-user-graduate"></i> Manage Students
+      </a>
+
+      <a href="{% url 'superadmin:manage_plans' %}" class="{% if request.resolver_match.url_name == 'manage_plans' %}active{% endif %}">
+        <i class="fas fa-clipboard-list"></i> Manage Plans
+      </a>
+
+      <a href="{% url 'superadmin:all_tickets' %}" class="{% if request.resolver_match.url_name == 'all_tickets' %}active{% endif %}">
+        <i class="fas fa-ticket-alt"></i> All Tickets
+      </a>
+
+      <a href="{% url 'superadmin:send_message' %}" class="{% if request.resolver_match.url_name == 'send_message' %}active{% endif %}">
+        <i class="fas fa-envelope"></i> Manage Messages
+      </a>
+
+      <a href="{% url 'superadmin:manage_principals' %}" class="{% if request.resolver_match.url_name == 'manage_principals' %}active{% endif %}">
+        <i class="fas fa-user-tie"></i> Manage Principal
+      </a>
+
+      <a href="{% url 'superadmin:manage_school_subscriptions' %}" class="{% if request.resolver_match.url_name == 'manage_school_subscriptions' %}active{% endif %}">
+        <i class="fas fa-file-invoice-dollar"></i> School Subscriptions
+      </a>
+    </nav>
+
+    <div class="mt-auto">
+      <a href="{% url 'principal:create_ticket' %}" class="{% if request.resolver_match.url_name == 'create_ticket' %}active{% endif %} down-sidebar">
+        <i class="fas fa-headset"></i> Support
+      </a>
+
+      <form method="post" action="{% url 'teacher:logout' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn logout-button">
+          <i class="fas fa-sign-out-alt me-2"></i> Logout
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Desktop Sidebar -->
+<div class="col-md-2 d-none d-md-flex flex-column sidebar justify-content-between">
+  <div>
+    <!-- Logo -->
+    <div class="logo mb-4 text-center">
+      <img src="{% static 'vendor/img/logo.png' %}" alt="Logo" width="100" />
+    </div>
+
+    <a href="{% url 'superadmin:dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+      <i class="fas fa-chart-line"></i> Overview
+    </a>
+
+    <a href="{% url 'superadmin:manage_schools' %}" class="{% if request.resolver_match.url_name == 'manage_schools' %}active{% endif %}">
+      <i class="fas fa-school"></i> Manage School
+    </a>
+
+    <a href="{% url 'superadmin:manage_teachers' %}" class="{% if request.resolver_match.url_name == 'manage_teachers' %}active{% endif %}">
+      <i class="fas fa-chalkboard-teacher"></i> Manage Teachers
+    </a>
+
+    <a href="{% url 'superadmin:manage_students' %}" class="{% if request.resolver_match.url_name == 'manage_students' %}active{% endif %}">
+      <i class="fas fa-user-graduate"></i> Manage Students
+    </a>
+
+    <a href="{% url 'superadmin:manage_plans' %}" class="{% if request.resolver_match.url_name == 'manage_plans' %}active{% endif %}">
+      <i class="fas fa-clipboard-list"></i> Manage Plans
+    </a>
+
+    <a href="{% url 'superadmin:all_tickets' %}" class="{% if request.resolver_match.url_name == 'all_tickets' %}active{% endif %}">
+      <i class="fas fa-ticket-alt"></i> All Tickets
+    </a>
+
+    <a href="{% url 'superadmin:send_message' %}" class="{% if request.resolver_match.url_name == 'send_message' %}active{% endif %}">
+      <i class="fas fa-envelope"></i> Manage Messages
+    </a>
+
+    <a href="{% url 'superadmin:manage_principals' %}" class="{% if request.resolver_match.url_name == 'manage_principals' %}active{% endif %}">
+      <i class="fas fa-user-tie"></i> Manage Principal
+    </a>
+
+    <a href="{% url 'superadmin:manage_school_subscriptions' %}" class="{% if request.resolver_match.url_name == 'manage_school_subscriptions' %}active{% endif %}">
+      <i class="fas fa-file-invoice-dollar"></i> School Subscriptions
+    </a>
+  </div>
+
+  <div>
+    <form method="post" action="{% url 'teacher:logout' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn logout-button">
+        <i class="fas fa-sign-out-alt me-2"></i> Logout
+      </button>
+    </form>
+  </div>
+</div>
+
+
+
+
+
+
+
+  
+    {% block content %}
+    {% endblock %}
+
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+
+</body>
+</html>

@@ -1,0 +1,119 @@
+{% extends "superadmin/superadmin_base.html" %}
+{% load static %}
+{% block title %}Super Admin Dashboard{% endblock %}
+
+{% block content %}
+
+<style>
+  .custom-card {
+    border-radius: 1rem;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+    background: #fff;
+  }
+
+  .custom-card h4 {
+    font-weight: 600;
+    color: #0d6efd;
+  }
+
+  .form-label {
+    font-weight: 500;
+  }
+
+  .form-control, .form-select {
+    border-radius: 0.5rem;
+    padding: 0.65rem 1rem;
+    font-size: 0.95rem;
+  }
+
+  textarea.form-control {
+    min-height: 120px;
+  }
+
+  .btn-primary {
+    padding: 0.6rem 1.5rem;
+    font-weight: 500;
+    border-radius: 0.5rem;
+  }
+</style>
+
+<div class="col-md-10 p-4">
+  <div class="custom-card p-4">
+    <h4 class="mb-4">📤 Send Message</h4>
+
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="mb-3">
+        <label class="form-label" for="id_recipient">{{ form.recipient.label }}</label>
+        {{ form.recipient }}
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label" for="id_subject">{{ form.subject.label }}</label>
+        {{ form.subject }}
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label" for="id_body">{{ form.body.label }}</label>
+        {{ form.body }}
+      </div>
+
+      <button type="submit" class="btn btn-primary mt-2">Send Message</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  // Optional enhancement: Autofocus first input
+  document.addEventListener('DOMContentLoaded', () => {
+    const firstInput = document.querySelector('input, select, textarea');
+    if (firstInput) firstInput.focus();
+  });
+</script>
+
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Main Content -->
+<div class="col-md-10 p-4">
+
+
+
+  <h4>📤 Send Message</h4>
+  <form method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+      {{ form.recipient.label_tag }} {{ form.recipient }}
+    </div>
+    <div class="mb-3">
+      {{ form.subject.label_tag }} {{ form.subject }}
+    </div>
+    <div class="mb-3">
+      {{ form.body.label_tag }} {{ form.body }}
+    </div>
+    <button type="submit" class="btn btn-primary">Send</button>
+  </form>
+</div>
+
+
+
+

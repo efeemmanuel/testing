@@ -1,0 +1,294 @@
+{% extends "principal/principal_base.html" %}
+{% load static %}
+{% block title %}Principal Dashboard{% endblock %}
+
+{% block content %}
+
+{% if messages %}
+  <!-- Toast container -->
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1100">
+    {% for message in messages %}
+      <div class="toast align-items-center text-bg-success border-0 mb-2" role="alert">
+        <div class="d-flex">
+          <div class="toast-body">
+            {{ message }}
+          </div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  <script>
+    document.querySelectorAll('.toast').forEach(t => new bootstrap.Toast(t).show());
+  </script>
+{% endif %}
+
+<!-- Main Content -->
+<div class="col-md-10 p-4"> 
+
+  <!-- Profile Section -->
+  <div class="profile-section d-flex justify-content-between align-items-center mb-4">
+    <div class="btn-wrapper d-flex gap-2"></div>
+
+    <div class="profile-info d-flex align-items-center gap-3">
+      <a href="{% url 'principal:profile_management' %}" class="d-flex align-items-center text-decoration-none text-dark">
+        <img src="{{ request.user.principal_profile.profile_picture.url|default:'/static/vendor/img/me.jpeg' }}" alt="User" class="profile-pic" />
+        <div class="ms-2">
+          <h6 class="mb-0">
+            {{ request.user.principal_profile.first_name }} {{ request.user.principal_profile.last_name }}
+          </h6>
+          <small>{{ request.user.principal_profile.school.name }}</small>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="row g-3">
+    <div class="col-md-3">
+      <div class="summary-card purple-card d-flex justify-content-between align-items-center">
+        <div class="card-text">
+          <p class="card-title">Total Students</p>
+          <h2>{{ total_students }}</h2>
+        </div>
+        <i class="fas fa-users text-primary"></i>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="summary-card green-card d-flex justify-content-between align-items-center">
+        <div class="card-text">
+          <p class="card-title">Present Today</p>
+          <h2>{{ total_present }}</h2>
+        </div>
+        <i class="fas fa-user-check text-success"></i>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="summary-card green-card d-flex justify-content-between align-items-center">
+        <div class="card-text">
+          <p class="card-title">Absent Today</p>
+          <h2>{{ total_absent }}</h2>
+        </div>
+        <i class="fas fa-user-times text-danger"></i>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="summary-card blue-card d-flex justify-content-between align-items-center">
+        <div class="card-text">
+          <p class="card-title">Attendance %</p>
+          <h2>{{ attendance_percent }}%</h2>
+        </div>
+        <i class="fas fa-percent text-info"></i>
+      </div>
+    </div>
+  </div>
+
+<div class="row mt-4" style="min-height: 150px;">
+  <!-- 🟦 Bar Chart Column -->
+  <div class="col-md-7 d-flex">
+    <div class="card flex-fill">
+      <div class="card-header">
+        <h5 class="mb-0">Peak Attendance Hours</h5>
+      </div>
+      <div class="card-body">
+        <canvas id="attendanceHourChart" style="height: 200px;"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🟧 Pie Chart Column -->
+  <div class="col-md-5 d-flex">
+    <div class="card flex-fill">
+      <div class="card-header">
+        <h5 class="mb-0">Attendance Trends</h5>
+      </div>
+      <div class="card-body d-flex flex-column justify-content-center">
+        <canvas id="attendancePieChart" style="height: 200px;"></canvas>
+        <div class="mt-3 text-center">
+          <span class="badge bg-success me-2">Present: {{ total_present }}</span>
+          <span class="badge bg-danger">Absent: {{ total_absent }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+  <!-- Attendance Summary + Recent -->
+  <div class="row mt-4">
+    <div class="col-md-7 order-md-1 order-2 stud">
+      <div class="students-section p-3 rounded">
+        <h6 class="quick-action mb-3">Attendance for {{ date }} – Class Attendance Summary</h6>
+        <table class="table student-table mb-0">
+          <thead>
+            <tr>
+              <th>Class</th>
+              <th>Total</th>
+              <th>Present</th>
+              <th>Absent</th>
+              <th class="text-end">% Present</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in class_summaries %}
+              <tr>
+                <td><strong>{{ c.name }}</strong></td>
+                <td>{{ c.total }}</td>
+                <td>{{ c.present }}</td>
+                <td>{{ c.absent }}</td>
+                <td class="text-end">{{ c.percentage }}%</td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="5" class="text-center text-muted">No class data available.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="col-md-5 order-md-2 order-1">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="quick-action">Recent Attendance</h6>
+      </div>
+
+      {% for d in daily_stats %}
+        <div class="attendance-record">
+          <div class="record-left">
+            <a href="{% url 'principal:attendance_pdf' day=d.date %}" target="_blank" class="pdf-link" title="View PDF for {{ d.date }}">
+              <i class="fas fa-file-pdf"></i> {{ d.date }}
+            </a>
+
+          </div>
+          <div class="status">
+            <span class="tooltip-icon" data-tooltip="Present Students">
+              <i class="fas fa-user-check text-success"></i> {{ d.present }}
+            </span>
+            <span class="tooltip-icon ms-3" data-tooltip="Absent Students">
+              <i class="fas fa-user-times text-danger"></i> {{ d.absent }}
+            </span>
+          </div>
+        </div>
+      {% empty %}
+        <div class="alert alert-info py-2">No attendance yet.</div>
+      {% endfor %}
+    </div>
+
+
+    
+  </div>
+</div>
+
+<!-- JSON Data + Chart Script -->
+{{ hours|json_script:"hour-data" }}
+{{ attendance_by_hour|json_script:"attendance-count-data" }}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const hourLabels = JSON.parse(document.getElementById("hour-data").textContent);
+  const attendanceCounts = JSON.parse(document.getElementById("attendance-count-data").textContent);
+
+  const ctx = document.getElementById('attendanceHourChart').getContext('2d');
+  const attendanceChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: hourLabels.map(h => `${h}:00`),
+      datasets: [{
+        label: 'Attendance',
+        data: attendanceCounts,
+        backgroundColor: 'rgba(54, 162, 235, 0.85)',
+        borderRadius: 10,
+        barThickness: 26
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            display: false
+          },
+          grid: {
+            drawTicks: false,
+            drawBorder: false,
+            color: 'rgba(0,0,0,0.04)'
+          }
+        },
+        x: {
+          ticks: {
+            color: '#333',
+            font: {
+              size: 12
+            }
+          },
+          grid: {
+            display: false
+          }
+        }
+      },
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          backgroundColor: '#222',
+          titleFont: { size: 13 },
+          bodyFont: { size: 12 },
+          callbacks: {
+            label: (context) => `${context.parsed.y} student(s)`
+          }
+        }
+      }
+    }
+  });
+
+  
+  const pieCtx = document.getElementById('attendancePieChart').getContext('2d');
+  const pieChart = new Chart(pieCtx, {
+    type: 'pie',
+    data: {
+      labels: ['Present', 'Absent'],
+      datasets: [{
+        data: [{{ total_present }}, {{ total_absent }}],
+        backgroundColor: ['#28a745', '#dc3545'],
+        hoverOffset: 10
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            font: {
+              size: 13
+            }
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: context => {
+              const value = context.parsed;
+              const total = context.chart._metasets[context.datasetIndex].total;
+              const percent = ((value / total) * 100).toFixed(1);
+              return `${value} students (${percent}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+
+
+
+
+</script>
+
+{% endblock %}
+

@@ -1,0 +1,441 @@
+{% extends 'teacher/teacher_base.html' %}
+{% load static %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+
+<style>
+.toast-success {
+  background-color: #28a745; 
+}
+
+.toast-error {
+  background-color: #dc3545; 
+}
+
+</style>
+
+
+<div class="col-md-10 main-content">
+
+  <!-- Toast message container -->
+<div id="toastMsg" class="position-fixed top-0 start-50 translate-middle-x mt-4" style="z-index: 9999; display: none;">
+  <div id="toastBox" class="alert text-white px-4 py-3 rounded shadow" role="alert"></div>
+</div>
+
+  <!-- Header ----------------------------------------------------------- -->
+  <div class="d-flex justify-content-between align-items-start flex-wrap attendance-header mb-4">
+    <div class="daily-attendance">
+      <div class="d-flex align-items-center">
+        <i class="bi bi-person-lines-fill me-2 fs-4"></i>
+        <div>
+          <h5 class="mb-0">Student Management</h5>
+      
+        </div>
+        <span class="badge bg-light text-dark ms-3">{{ teacher.classgroup.name }}</span>
+      </div>
+    </div>
+
+<button class="btn btn-enroll {% if not can_enroll %}disabled text-muted{% endif %}" 
+        {% if can_enroll %} data-bs-toggle="modal" data-bs-target="#enrollModal" {% endif %}>
+  <i class="bi bi-person-plus-fill me-1"></i> Enroll Students
+</button>
+  </div>
+
+  <!-- Search form ---------------------------------------------------- -->
+<form method="get" class="row g-2 mb-4 student-search">
+  <div class="col-sm-9">
+    <input name="q"
+           value="{{ query }}"
+           class="form-control"
+           placeholder="Search by student name or ID...">
+  </div>
+  <div class="col-sm-3 d-grid">
+    <button class="btn btn-primary h-100">
+      <i class="bi bi-search"></i> Search
+    </button>
+  </div>
+  {% if query %}
+      <div class="col-auto">
+        <a href="{% url 'teacher:manage_students' %}" class="btn btn-outline-secondary">
+          Clear
+        </a>
+      </div>
+    {% endif %}
+</form>
+
+
+  <!-- Students table ------------------------------------------------- -->
+  <div class="table-responsive">
+    <table class="table table-bordered align-middle">
+      <thead class="table-light">
+        <tr>
+          <th style="width:120px;">ID</th>
+          <th>Name</th>
+          <th style="width:220px;">&nbsp;Class</th>
+          <th style="width:220px;">Parent&nbsp;Email</th>
+          <th style="width:220px;">Parent&nbsp;Name</th>
+          <th style="width:130px;"></th>
+        </tr>
+      </thead>
+
+      <tbody>
+      {% for s in students %}
+        <tr>
+          <td class="fw-semibold">{{ s.admission_id }}</td>
+          <td>{{ s.firstname }} &nbsp; {{ s.lastname }}</td>
+          <td>{{ s.classgroup }}</td>
+          <td>{{ s.guardian_email|default:"—" }}</td>
+          <td>{{ s.guardian_name|default:"—" }}</td>
+          <td class="text-center">
+            <!-- EDIT -->
+            <a class="btn btn-sm btn-outline-primary edit-btn"
+   data-bs-toggle="modal"
+   data-bs-target="#editModal"
+   data-pk="{{ s.pk }}"
+   data-id="{{ s.admission_id }}"
+   data-fn="{{ s.firstname }}"
+   data-ln="{{ s.lastname }}"
+   data-dob="{{ s.date_of_birth|date:'Y-m-d' }}"
+   data-mail="{{ s.guardian_email }}"
+   data-gn="{{ s.guardian_name }}"
+   data-phone="{{ s.guardian_phone }}"
+   data-classgroup="{{ s.classgroup.id }}">
+   <i class="bi bi-pencil-square"></i>
+   Edit
+</a>
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="4" class="text-center p-4">No students found.</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+
+<!-------------------------------------------------------- Enroll Modal ----------------------------------------------------------->
+
+
+<div class="modal fade" id="enrollModal" tabindex="-1" aria-labelledby="enrollModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content p-4">
+
+      <div class="modal-header">
+        <div>
+          <h5 class="modal-title fw-bold" id="enrollModalLabel">Enroll New Student</h5>
+
+        </div>
+        <span class="badge bg-primary ms-2">{{ teacher.classgroup.name }}</span>
+        <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal"></button>
+      </div>
+
+      <!-- POST form -->
+      <form id="enrollForm" method="post" action="{% url 'teacher:manage_students' %}">
+
+        {% csrf_token %}
+        <input type="hidden" name="fingerprint_data" id="fingerprint_data">
+
+        <div class="modal-body">
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Student&nbsp;ID</label>
+              <input name="admission_id" type="text" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">First&nbsp;Name</label>
+              <input name="firstname" type="text" class="form-control" required>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Last&nbsp;Name</label>
+              <input name="lastname" type="text" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Date&nbsp;of&nbsp;Birth</label>
+              <input name="date_of_birth" type="date" class="form-control">
+            </div>
+          </div>
+
+          <!-- If teacher has only one class, keep it hidden -->
+                    <div class="mb-3">
+        <label class="form-label">Class Group</label>
+        {{ form.classgroup }}
+      </div>
+
+          <hr class="my-4">
+          <h6>Guardian information</h6>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Guardian&nbsp;Name</label>
+              <input name="guardian_name" type="text" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Guardian&nbsp;Email</label>
+              <input name="guardian_email" type="email" class="form-control">
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label">Guardian&nbsp;Phone</label>
+            <input name="guardian_phone" type="tel" class="form-control">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-enroll px-4"
+                  onclick="startFingerprintEnrollment()">Enroll (scan)</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+</div>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+const FASTAPI_BASE = "http://127.0.0.1:8001";
+
+function showFingerModal(msg) {
+  document.getElementById("modalMessage").innerText = msg;
+  bootstrap.Modal.getOrCreateInstance(document.getElementById("fingerModal")).show();
+}
+
+async function startFingerprintEnrollment() {
+  showFingerModal("Place your finger on the scanner…");
+  try {
+    const first = await fetch(`${FASTAPI_BASE}/scan`, {method:"POST"}).then(r=>r.json());
+
+    showFingerModal("Scan the SAME finger again…");
+    // second scan (if you really need it) …
+
+    const compare = await fetch(`${FASTAPI_BASE}/compare`, {
+      method:"POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({stored_fmd: first.fmd})
+    }).then(r=>r.json());
+
+    if (compare.match) {
+      document.getElementById("fingerprint_data").value = first.fmd;
+      showFingerModal("✅ Fingerprint captured. Saving…");
+      document.getElementById("enrollForm").submit();
+    } else {
+      showFingerModal("❌ Scans didn’t match. Try again.");
+    }
+  } catch(e) {
+    console.error(e);
+    showFingerModal("⚠️ Scanner error. Is FastAPI running?");
+  }
+}
+</script>
+
+
+<!-- Fingerprint Status Modal -->
+<div class="modal fade" id="fingerModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content p-3">
+      <h5 class="modal-title">Fingerprint Enrollment</h5>
+      <p id="modalMessage" class="mb-0"></p>
+    </div>
+  </div>
+</div>
+<!-------------------------------------------------------- Enroll Modal ----------------------------------------------------------->
+
+<!-- Edit Student Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content p-4">
+
+      <div class="modal-header">
+        <div>
+          <h5 class="modal-title fw-bold" id="editModalLabel">Edit Student</h5>
+         
+        </div>
+        
+        <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+   
+      <form id="editStudentForm" method="post" action="">
+        {% csrf_token %}
+        <input type="hidden" name="pk" id="pkField">
+
+        <div class="modal-body">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Student&nbsp;ID</label>
+              <input name="admission_id" id="studentId"
+                     type="text" class="form-control" placeholder="Student ID">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">First&nbsp;Name</label>
+              <input name="firstname" id="firstName"
+                     type="text" class="form-control" placeholder="First name">
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Last&nbsp;Name</label>
+              <input name="lastname" id="lastName"
+                     type="text" class="form-control" placeholder="Last name">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Date&nbsp;of&nbsp;Birth</label>
+              <input name="date_of_birth" id="dob"
+                     type="date" class="form-control">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Class</label>
+            <select name="classgroup" id="classSelect" class="form-select">
+            <option disabled selected value="">Select Class</option>
+            {% for group in classgroups %}
+              <option value="{{ group.id }}">{{ group.name }}</option>
+            {% endfor %}
+          </select>
+          </div>
+
+          <hr class="my-4">
+          <h6>Guardian information</h6>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Guardian&nbsp;Name</label>
+              <input name="guardian_name" id="guardianName"
+                     type="text" class="form-control" placeholder="Full name">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Guardian&nbsp;Email</label>
+              <input name="guardian_email" id="guardianEmail"
+                     type="email" class="form-control" placeholder="Email">
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label">Guardian&nbsp;Phone</label>
+            <input name="guardian_phone" id="guardianPhone"
+                   type="tel" class="form-control" placeholder="Phone number">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-enroll">
+            Save
+          </button>
+
+          <button type="button" class="btn btn-delete" id="deleteBtn">
+            Delete
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div> 
+
+<script>
+  //  Show toast with message
+  function showToast(message, isSuccess = true) {
+    const toastBox = document.getElementById("toastBox");
+    const toastContainer = document.getElementById("toastMsg");
+
+    toastBox.textContent = message;
+    toastBox.className = "alert text-white px-4 py-3 rounded shadow " + (isSuccess ? "toast-success" : "toast-error");
+    toastContainer.style.display = "block";
+
+    setTimeout(() => {
+      toastContainer.style.display = "none";
+    }, 3000); // auto-hide after 3 seconds
+  }
+
+  // Prefill modal form on edit button click
+  document.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+    document.getElementById('pkField').value = btn.dataset.pk;
+    document.getElementById('studentId').value = btn.dataset.id;
+    document.getElementById('firstName').value = btn.dataset.fn;
+    document.getElementById('lastName').value = btn.dataset.ln;
+    document.getElementById('dob').value = btn.dataset.dob;
+    document.getElementById('guardianName').value = btn.dataset.gn;
+    document.getElementById('guardianEmail').value = btn.dataset.mail;
+    document.getElementById('guardianPhone').value = btn.dataset.phone;
+    document.getElementById('classSelect').value = btn.dataset.classgroup;
+    });
+  });
+
+  // Submit the edit form via AJAX
+  document.getElementById("editStudentForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+    const form = e.target;
+    const data = new FormData(form);
+
+    fetch("{% url 'teacher:update_student' %}", {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": data.get("csrfmiddlewaretoken")
+      },
+      body: data
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        showToast("Student updated successfully!", true);
+        setTimeout(() => location.reload(), 1500); // refresh after toast
+      } else {
+        showToast("Failed to save student. Check inputs.", false);
+        console.error(data.errors);
+      }
+    })
+    .catch(error => {
+      showToast("An error occurred during update.", false);
+      console.error(error);
+    });
+  });
+
+  //  Handle delete button with toast
+  document.getElementById("deleteBtn").addEventListener("click", function () {
+    const pk = document.getElementById("pkField").value;
+    const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+
+    if (confirm("Are you sure you want to delete this student?")) {
+      fetch("{% url 'teacher:delete_student' %}", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": csrfToken,
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: new URLSearchParams({ pk })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          showToast("Student deleted successfully!", true);
+          setTimeout(() => location.reload(), 1500);
+        } else {
+          showToast("Failed to delete student.", false);
+        }
+      })
+      .catch(error => {
+        showToast("An error occurred during deletion.", false);
+        console.error(error);
+      });
+    }
+  });
+</script>
+{% endblock %}
+
+
+
+
+

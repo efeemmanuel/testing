@@ -1,0 +1,51 @@
+{% extends "superadmin/superadmin_base.html" %}
+{% load static %}
+{% block title %}Super admn Dashboard{% endblock %}
+
+{% block content %}
+
+<!-- Main Content -->
+<div class="col-md-10 p-4">
+
+
+<div class="container py-4">
+  <h3 class="mb-4">Super Admin Dashboard</h3>
+  <div class="row text-center">
+    <div class="col-md-4 mb-3">
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <h5 class="card-title">Total Schools</h5>
+          <h2 class="card-text text-primary">{{ total_schools }}</h2>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 mb-3">
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <h5 class="card-title">Total Teachers</h5>
+          <h2 class="card-text text-success">{{ total_teachers }}</h2>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 mb-3">
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <h5 class="card-title">Total Students</h5>
+          <h2 class="card-text text-danger">{{ total_students }}</h2>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+{% endblock %}

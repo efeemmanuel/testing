@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ ticket.subject }}</h2>
+<p>{{ ticket.message }}</p>
+<p>Status: {{ ticket.status }}</p>
+
+<h4>Responses</h4>
+<ul>
+  {% for r in responses %}
+    <li><strong>{{ r.responder.email }}</strong>: {{ r.message }}</li>
+  {% empty %}
+    <li>No responses yet.</li>
+  {% endfor %}
+</ul>
+
+<h4>Add Response</h4>
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <label>Status</label>
+  <select name="status" class="form-select">
+    {% for code, label in status_choices %}
+      <option value="{{ code }}" {% if code == ticket.status %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="btn btn-success mt-2">Submit Response</button>
+</form>
+{% endblock %}
